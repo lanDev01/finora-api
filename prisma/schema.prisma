@@ -1,0 +1,69 @@
+// This is your Prisma schema file
+// https://www.prisma.io/docs/concepts/components/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Usuário ───────────────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String?
+  avatar    String?
+
+  githubId  String?  @unique
+  googleId  String?  @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  categories Category[]
+  expenses   Expense[]
+
+  @@map("users")
+}
+
+// ─── Categoria ─────────────────────────────────────────────────────────────────
+
+model Category {
+  id    String @id @default(cuid())
+  name  String
+  color String @default("#6366f1")
+  icon  String @default("tag")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  expenses Expense[]
+
+  @@map("categories")
+}
+
+// ─── Despesa ───────────────────────────────────────────────────────────────────
+
+model Expense {
+  id          String   @id @default(cuid())
+  description String
+  amount      Decimal  @db.Decimal(10, 2)
+  date        DateTime
+  notes       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
+
+  @@map("expenses")
+}
