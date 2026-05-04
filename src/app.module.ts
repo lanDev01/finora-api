@@ -7,6 +7,8 @@ import { ExpensesModule } from './expenses/expenses.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 
+import { IncomesModule } from './incomes/incomes.module';
+
 @Module({
   imports: [
     // Carrega o .env globalmente em todos os módulos
@@ -17,6 +19,7 @@ import { UsersModule } from './users/users.module';
     UsersModule,
     CategoriesModule,
     ExpensesModule,
+    IncomesModule,
     AnalyticsModule,
   ],
 })
