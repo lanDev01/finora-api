@@ -46,6 +46,29 @@ export class ExpensesService {
     return expense;
   }
 
+  async update(userId: string, expenseId: string, dto: CreateExpenseDto) {
+    await this.findOne(userId, expenseId);
+
+    const category = await this.prisma.category.findFirst({
+      where: { id: dto.categoryId, userId },
+    });
+    if (!category) {
+      throw new NotFoundException('Categoria não encontrada ou não pertence ao usuário.');
+    }
+
+    return this.prisma.expense.update({
+      where: { id: expenseId },
+      data: {
+        description: dto.description,
+        amount: dto.amount,
+        date: new Date(dto.date),
+        notes: dto.notes,
+        categoryId: dto.categoryId,
+      },
+      include: { category: true },
+    });
+  }
+
   async remove(userId: string, expenseId: string) {
     await this.findOne(userId, expenseId); // Valida ownership
     return this.prisma.expense.delete({ where: { id: expenseId } });

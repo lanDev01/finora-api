@@ -1,11 +1,13 @@
 import {
-    Body,
-    Controller,
-    Delete,
-    Get,
-    Param,
-    Post,
-    Query, UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import type { User } from '@prisma/client';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -42,6 +44,11 @@ export class ExpensesController {
   @Get(':id')
   findOne(@CurrentUser() user: User, @Param('id') id: string) {
     return this.expensesService.findOne(user.id, id);
+  }
+
+  @Put(':id')
+  update(@CurrentUser() user: User, @Param('id') id: string, @Body() dto: CreateExpenseDto) {
+    return this.expensesService.update(user.id, id, dto);
   }
 
   @Delete(':id')
