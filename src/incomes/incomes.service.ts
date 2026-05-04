@@ -57,6 +57,29 @@ export class IncomesService {
     return income;
   }
 
+  async update(userId: string, incomeId: string, dto: CreateIncomeDto) {
+    await this.findOne(userId, incomeId);
+
+    const category = await this.prisma.category.findFirst({
+      where: { id: dto.categoryId, userId },
+    });
+    if (!category) {
+      throw new NotFoundException('Categoria não encontrada ou não pertence ao usuário.');
+    }
+
+    return this.prisma.income.update({
+      where: { id: incomeId },
+      data: {
+        description: dto.description,
+        amount: dto.amount,
+        date: new Date(dto.date),
+        notes: dto.notes,
+        categoryId: dto.categoryId,
+      },
+      include: { category: true },
+    });
+  }
+
   async remove(userId: string, incomeId: string) {
     await this.findOne(userId, incomeId); // Valida ownership
     return this.prisma.income.delete({ where: { id: incomeId } });
