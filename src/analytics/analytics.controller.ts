@@ -53,4 +53,22 @@ export class AnalyticsController {
       year ? parseInt(year) : now.getFullYear(),
     );
   }
+
+  /**
+   * GET /api/analytics/dashboard?month=3&year=2026
+   * Receitas, despesas, saldo e variação % vs mês anterior (cards da home).
+   */
+  @Get('dashboard')
+  getDashboard(
+    @CurrentUser() user: User,
+    @Query('month') month: string,
+    @Query('year') year: string,
+  ) {
+    const now = new Date();
+    return this.analyticsService.getDashboardSummary(
+      user.id,
+      month ? parseInt(month) : now.getMonth() + 1,
+      year ? parseInt(year) : now.getFullYear(),
+    );
+  }
 }

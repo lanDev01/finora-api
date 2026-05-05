@@ -102,4 +102,56 @@ export class AnalyticsService {
       percentChange: Math.round(diff * 10) / 10,
     };
   }
+
+  /**
+   * Totais do mês para os cards da home: receitas, despesas, saldo e % vs mês anterior.
+   */
+  async getDashboardSummary(userId: string, month: number, year: number) {
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 1);
+    const prevStart = new Date(year, month - 2, 1);
+
+    const [incomeCur, incomePrev, expCur, expPrev] = await Promise.all([
+      this.prisma.income.aggregate({
+        where: { userId, date: { gte: start, lt: end } },
+        _sum: { amount: true },
+      }),
+      this.prisma.income.aggregate({
+        where: { userId, date: { gte: prevStart, lt: start } },
+        _sum: { amount: true },
+      }),
+      this.prisma.expense.aggregate({
+        where: { userId, date: { gte: start, lt: end } },
+        _sum: { amount: true },
+      }),
+      this.prisma.expense.aggregate({
+        where: { userId, date: { gte: prevStart, lt: start } },
+        _sum: { amount: true },
+      }),
+    ]);
+
+    const incomeTotal = Number(incomeCur._sum.amount ?? 0);
+    const incomePrevTotal = Number(incomePrev._sum.amount ?? 0);
+    const expenseTotal = Number(expCur._sum.amount ?? 0);
+    const expensePrevTotal = Number(expPrev._sum.amount ?? 0);
+
+    const balance = incomeTotal - expenseTotal;
+    const balancePrev = incomePrevTotal - expensePrevTotal;
+
+    const pct = (current: number, previous: number) => {
+      if (previous > 0) {
+        return Math.round(((current - previous) / previous) * 1000) / 10;
+      }
+      return 0;
+    };
+
+    return {
+      incomeTotal,
+      expenseTotal,
+      balance,
+      incomePercentChange: pct(incomeTotal, incomePrevTotal),
+      expensePercentChange: pct(expenseTotal, expensePrevTotal),
+      balancePercentChange: pct(balance, balancePrev),
+    };
+  }
 }
