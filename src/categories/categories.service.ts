@@ -7,9 +7,17 @@ export class CategoriesService {
   constructor(private prisma: PrismaService) {}
 
   create(userId: string, dto: CreateCategoryDto) {
-    return this.prisma.category.create({
-      data: { ...dto, userId },
-    });
+    const data: { name: string; userId: string; color?: string; icon?: string } = {
+      name: dto.name,
+      userId,
+    };
+    if (dto.color !== undefined && dto.color !== '') {
+      data.color = dto.color;
+    }
+    if (dto.icon !== undefined && dto.icon !== '') {
+      data.icon = dto.icon;
+    }
+    return this.prisma.category.create({ data });
   }
 
   findAll(userId: string) {
