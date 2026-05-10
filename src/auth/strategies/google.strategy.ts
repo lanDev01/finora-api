@@ -29,7 +29,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       providerId: profile.id,
       email: profile.emails?.[0]?.value,
       name: profile.displayName,
-      avatar: profile.photos?.[0]?.value,
+      avatar: profile.photos?.[0]?.value ?? profile._json?.picture,
     });
 
     done(null, user);

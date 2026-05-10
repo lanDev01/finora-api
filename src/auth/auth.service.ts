@@ -79,29 +79,37 @@ export class AuthService {
       where: { [providerField]: payload.providerId },
     });
 
-    if (!user) {
-      // Verifica se já existe um usuário com o mesmo e-mail (conta existente)
-      user = await this.prisma.user.findUnique({
-        where: { email: payload.email },
-      });
-
-      if (user) {
-        // Vincula o provider à conta existente
+    if (user) {
+      if (payload.avatar && user.avatar !== payload.avatar) {
         user = await this.prisma.user.update({
           where: { id: user.id },
-          data: { [providerField]: payload.providerId },
-        });
-      } else {
-        // Cria um novo usuário
-        user = await this.prisma.user.create({
-          data: {
-            name: payload.name,
-            email: payload.email,
-            avatar: payload.avatar,
-            [providerField]: payload.providerId,
-          },
+          data: { avatar: payload.avatar },
         });
       }
+      return this.generateToken(user.id, user.email);
+    }
+
+    user = await this.prisma.user.findUnique({
+      where: { email: payload.email },
+    });
+
+    if (user) {
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          [providerField]: payload.providerId,
+          ...(payload.avatar ? { avatar: payload.avatar } : {}),
+        },
+      });
+    } else {
+      user = await this.prisma.user.create({
+        data: {
+          name: payload.name,
+          email: payload.email,
+          avatar: payload.avatar,
+          [providerField]: payload.providerId,
+        },
+      });
     }
 
     return this.generateToken(user.id, user.email);
