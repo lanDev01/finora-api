@@ -1,5 +1,5 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
-import type { User } from '@prisma/client';
+import { CategoryType, type User } from '@prisma/client';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AnalyticsService } from './analytics.service';
@@ -9,37 +9,49 @@ import { AnalyticsService } from './analytics.service';
 export class AnalyticsController {
   constructor(private analyticsService: AnalyticsService) {}
 
-  /**
-   * GET /api/analytics/by-category?month=3&year=2026
-   * Retorna gastos agrupados por categoria (para gráfico de pizza)
-   */
   @Get('by-category')
   getByCategory(
     @CurrentUser() user: User,
     @Query('month') month: string,
     @Query('year') year: string,
+    @Query('type') type?: string,
   ) {
     const now = new Date();
-    return this.analyticsService.getByCategory(
-      user.id,
-      month ? parseInt(month) : now.getMonth() + 1,
-      year ? parseInt(year) : now.getFullYear(),
-    );
+    const m = month ? parseInt(month, 10) : now.getUTCMonth() + 1;
+    const y = year ? parseInt(year, 10) : now.getUTCFullYear();
+    const categoryType =
+      type === 'INCOME' ? CategoryType.INCOME : CategoryType.EXPENSE;
+    return this.analyticsService.getByCategory(user.id, m, y, categoryType);
   }
 
-  /**
-   * GET /api/analytics/last-12-months
-   * Retorna total por mês nos últimos 12 meses (para gráfico de linha/barras)
-   */
+  @Get('evolution')
+  getEvolution(@CurrentUser() user: User, @Query('months') months?: string) {
+    const count = months ? parseInt(months, 10) : 12;
+    return this.analyticsService.getEvolution(user.id, count);
+  }
+
+  /** @deprecated use /evolution */
   @Get('last-12-months')
   getLast12Months(@CurrentUser() user: User) {
     return this.analyticsService.getLast12Months(user.id);
   }
 
-  /**
-   * GET /api/analytics/summary?month=3&year=2026
-   * Resumo do mês: total, contagem e comparação com mês anterior
-   */
+  @Get('compare')
+  getCompare(
+    @CurrentUser() user: User,
+    @Query('month') month: string,
+    @Query('year') year: string,
+    @Query('compareMonth') compareMonth?: string,
+    @Query('compareYear') compareYear?: string,
+  ) {
+    const now = new Date();
+    const m = month ? parseInt(month, 10) : now.getUTCMonth() + 1;
+    const y = year ? parseInt(year, 10) : now.getUTCFullYear();
+    const cm = compareMonth ? parseInt(compareMonth, 10) : undefined;
+    const cy = compareYear ? parseInt(compareYear, 10) : undefined;
+    return this.analyticsService.getPeriodComparison(user.id, m, y, cm, cy);
+  }
+
   @Get('summary')
   getSummary(
     @CurrentUser() user: User,
@@ -49,15 +61,11 @@ export class AnalyticsController {
     const now = new Date();
     return this.analyticsService.getMonthlySummary(
       user.id,
-      month ? parseInt(month) : now.getMonth() + 1,
-      year ? parseInt(year) : now.getFullYear(),
+      month ? parseInt(month, 10) : now.getUTCMonth() + 1,
+      year ? parseInt(year, 10) : now.getUTCFullYear(),
     );
   }
 
-  /**
-   * GET /api/analytics/dashboard?month=3&year=2026
-   * Receitas, despesas, saldo e variação % vs mês anterior (cards da home).
-   */
   @Get('dashboard')
   getDashboard(
     @CurrentUser() user: User,
@@ -67,8 +75,8 @@ export class AnalyticsController {
     const now = new Date();
     return this.analyticsService.getDashboardSummary(
       user.id,
-      month ? parseInt(month) : now.getMonth() + 1,
-      year ? parseInt(year) : now.getFullYear(),
+      month ? parseInt(month, 10) : now.getUTCMonth() + 1,
+      year ? parseInt(year, 10) : now.getUTCFullYear(),
     );
   }
 }
