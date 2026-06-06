@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { CategoryType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateIncomeDto } from './dto/create-income.dto';
 
@@ -7,16 +8,7 @@ export class IncomesService {
   constructor(private prisma: PrismaService) {}
 
   async create(userId: string, dto: CreateIncomeDto) {
-    // Verifica se a categoria pertence ao usuário
-    const category = await this.prisma.category.findFirst({
-      where: { id: dto.categoryId, userId },
-    });
-
-    if (!category) {
-      throw new NotFoundException(
-        'Categoria não encontrada ou não pertence ao usuário.',
-      );
-    }
+    await this.assertIncomeCategory(userId, dto.categoryId);
 
     return this.prisma.income.create({
       data: {
@@ -60,12 +52,7 @@ export class IncomesService {
   async update(userId: string, incomeId: string, dto: CreateIncomeDto) {
     await this.findOne(userId, incomeId);
 
-    const category = await this.prisma.category.findFirst({
-      where: { id: dto.categoryId, userId },
-    });
-    if (!category) {
-      throw new NotFoundException('Categoria não encontrada ou não pertence ao usuário.');
-    }
+    await this.assertIncomeCategory(userId, dto.categoryId);
 
     return this.prisma.income.update({
       where: { id: incomeId },
@@ -83,5 +70,16 @@ export class IncomesService {
   async remove(userId: string, incomeId: string) {
     await this.findOne(userId, incomeId); // Valida ownership
     return this.prisma.income.delete({ where: { id: incomeId } });
+  }
+
+  private async assertIncomeCategory(userId: string, categoryId: string) {
+    const category = await this.prisma.category.findFirst({
+      where: { id: categoryId, userId, type: CategoryType.INCOME },
+    });
+    if (!category) {
+      throw new NotFoundException(
+        'Categoria de receita não encontrada ou não pertence ao usuário.',
+      );
+    }
   }
 }

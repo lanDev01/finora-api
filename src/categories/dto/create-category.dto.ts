@@ -1,10 +1,14 @@
 import { Transform } from 'class-transformer';
-import { IsHexColor, IsIn, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsHexColor, IsIn, IsOptional, IsString } from 'class-validator';
+import { CategoryType } from '@prisma/client';
 import { ALLOWED_CATEGORY_ICONS } from '../allowed-category-icons';
 
 export class CreateCategoryDto {
   @IsString()
   name: string;
+
+  @IsEnum(CategoryType)
+  type: CategoryType;
 
   @IsOptional()
   @IsHexColor()

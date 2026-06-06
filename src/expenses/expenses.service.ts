@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { CategoryType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 
@@ -6,7 +7,9 @@ import { CreateExpenseDto } from './dto/create-expense.dto';
 export class ExpensesService {
   constructor(private prisma: PrismaService) {}
 
-  create(userId: string, dto: CreateExpenseDto) {
+  async create(userId: string, dto: CreateExpenseDto) {
+    await this.assertExpenseCategory(userId, dto.categoryId);
+
     return this.prisma.expense.create({
       data: {
         description: dto.description,
@@ -49,12 +52,7 @@ export class ExpensesService {
   async update(userId: string, expenseId: string, dto: CreateExpenseDto) {
     await this.findOne(userId, expenseId);
 
-    const category = await this.prisma.category.findFirst({
-      where: { id: dto.categoryId, userId },
-    });
-    if (!category) {
-      throw new NotFoundException('Categoria não encontrada ou não pertence ao usuário.');
-    }
+    await this.assertExpenseCategory(userId, dto.categoryId);
 
     return this.prisma.expense.update({
       where: { id: expenseId },
@@ -72,5 +70,16 @@ export class ExpensesService {
   async remove(userId: string, expenseId: string) {
     await this.findOne(userId, expenseId); // Valida ownership
     return this.prisma.expense.delete({ where: { id: expenseId } });
+  }
+
+  private async assertExpenseCategory(userId: string, categoryId: string) {
+    const category = await this.prisma.category.findFirst({
+      where: { id: categoryId, userId, type: CategoryType.EXPENSE },
+    });
+    if (!category) {
+      throw new NotFoundException(
+        'Categoria de despesa não encontrada ou não pertence ao usuário.',
+      );
+    }
   }
 }
