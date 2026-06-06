@@ -18,6 +18,7 @@ import { memoryStorage } from 'multer';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateExpenseGoalDto } from './dto/update-expense-goal.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UsersService } from './users.service';
 
@@ -64,5 +65,18 @@ export class UsersController {
     @Body() dto: ChangePasswordDto,
   ): Promise<void> {
     return this.usersService.changePassword(user.id, dto);
+  }
+
+  @Patch('me/expense-goal')
+  updateExpenseGoal(
+    @CurrentUser() user: User,
+    @Body() dto: UpdateExpenseGoalDto,
+  ) {
+    return this.usersService.updateExpenseGoal(user.id, dto.amount ?? null);
+  }
+
+  @Patch('me/expense-goal/confirm-month')
+  confirmExpenseGoalMonth(@CurrentUser() user: User) {
+    return this.usersService.confirmExpenseGoalMonth(user.id);
   }
 }
