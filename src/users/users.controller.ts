@@ -6,8 +6,8 @@ import {
   HttpCode,
   HttpStatus,
   MaxFileSizeValidator,
-  Patch,
   ParseFilePipe,
+  Patch,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -48,7 +48,9 @@ export class UsersController {
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: TWO_MB }),
-          new FileTypeValidator({ fileType: /(image\/jpeg|image\/png|image\/gif)/ }),
+          new FileTypeValidator({
+            fileType: /(image\/jpeg|image\/png|image\/gif|image\/webp)/,
+          }),
         ],
         fileIsRequired: false,
       }),

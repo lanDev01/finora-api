@@ -1,9 +1,15 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  app.useStaticAssets(join(process.cwd(), 'uploads'), {
+    prefix: '/api/uploads/',
+  });
 
   // Prefixo global da API
   app.setGlobalPrefix('api');
@@ -11,9 +17,9 @@ async function bootstrap() {
   // Validação global de DTOs
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,       // Remove campos não declarados no DTO
+      whitelist: true, // Remove campos não declarados no DTO
       forbidNonWhitelisted: true,
-      transform: true,       // Transforma tipos automaticamente
+      transform: true, // Transforma tipos automaticamente
     }),
   );
 

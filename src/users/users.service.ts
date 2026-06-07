@@ -76,13 +76,14 @@ export class UsersService {
         select: { avatar: true },
       });
 
-      avatarUrl = await this.upload.uploadImage(file.buffer, 'avatars');
+      avatarUrl = await this.upload.uploadImage(
+        file.buffer,
+        'avatars',
+        file.mimetype,
+      );
 
       if (current?.avatar) {
-        const publicId = this.upload.extractPublicId(current.avatar);
-        if (publicId) {
-          this.upload.deleteImage(publicId).catch(() => undefined);
-        }
+        this.upload.deleteImage(current.avatar).catch(() => undefined);
       }
     }
 
@@ -103,7 +104,8 @@ export class UsersService {
     const updated = await this.prisma.user.update({
       where: { id: userId },
       data: {
-        monthlyExpenseGoal: amount === null || amount === undefined ? null : amount,
+        monthlyExpenseGoal:
+          amount === null || amount === undefined ? null : amount,
         expenseGoalConfirmedMonth: monthKey,
       },
       select: this.userSelect,
